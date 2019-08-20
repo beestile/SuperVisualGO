@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+ <!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+<mapper namespace="com.zetta.publisher.dao.TargetListDao">
+ 
+ 	<select id="maxGroupId" resultType="String">
+ 		SELECT Max(groupId) as groupId 
+ 		From zettaSoft.targetList
+ 	</select>
+ 	
+ 	<select id="maxTriggerId" resultType="String">
+ 		SELECT Max(triggerId) as triggerId 
+ 		From zettaSoft.targetList
+ 	</select>
+ 	
+  	<select id="maxJobId" resultType="String">
+ 		SELECT Max(jobId) as jobId 
+ 		From zettaSoft.targetList
+ 	</select>
+ 
+    <select id="selectAllTargetList" resultType="TargetList">
+        SELECT * FROM zettaSoft.TargetList
+        order by groupId desc
+    </select>
+    
+        <select id="selectRunningTargetList" resultType="TargetList">
+        SELECT * FROM zettaSoft.TargetList
+        WHERE status = 'run'
+        order by groupId desc
+    </select>
+
+    <select id="selectTargetList" resultType="TargetList" parameterType="String">
+        SELECT * FROM zettaSoft.TargetList
+        WHERE uniqueId = #{uniqueId}
+    </select>       
+ 
+    <insert id="insertTargetList" parameterType="TargetList">
+        INSERT INTO zettaSoft.TargetList VALUES(
+            #{uniqueId},
+            #{createdAt},
+            #{scheduleName},
+            #{triggerId},
+            #{groupId},
+            #{jobId},
+            #{cycleCode},
+            #{cycleTime},
+            #{useYN},
+            #{status}
+        )
+    </insert>
+ 
+ 	<!-- TargetList기본정보 업데이트 -->
+    <update id="updateTargetListInfo" parameterType="TargetList">
+        UPDATE zettaSoft.TargetList
+        SET scheduleName = #{scheduleName},
+            cycleCode = #{cycleCode},
+            cycleTime = #{cycleTime}
+        WHERE uniqueId = #{uniqueId}
+    </update>	
+    
+    <!-- TargetList실행상태 업데이트 -->
+    <update id="updateTargetListStatus" parameterType="TargetList">
+        UPDATE zettaSoft.TargetList
+        SET status = #{status}
+        WHERE uniqueId = #{uniqueId}
+    </update>	
+     
+    <delete id="deleteTargetList" parameterType="TargetList">    
+        DELETE FROM zettaSoft.TargetList
+        WHERE uniqueId = #{uniqueId}
+    </delete>
+    
+    <delete id="deleteAllTargetList">    
+        DELETE FROM zettaSoft.TargetList
+    </delete>
+    
+    
+</mapper>

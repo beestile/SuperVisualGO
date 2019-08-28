@@ -6,6 +6,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -13,16 +14,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.zetta.common.utils.zLogger;
 import com.zetta.publisher.model.TargetList;
-import com.zetta.zScheduler.utils.CommonConfig;
-import com.zetta.zScheduler.utils.DataUtils;
-import com.zetta.zScheduler.utils.zLogger;
+import com.zetta.zScheduler.model.schedulerVO;
+import com.zetta.zScheduler.utils.SchedulerUtils;
 
 @Controller
 public class SchedulerController {
+	
+	@Autowired
+    private schedulerSvc schedulerSvc;
+	
 	public zLogger logger = new zLogger(getClass());
-	public CommonConfig config = new CommonConfig();
-	public DataUtils dataUtils = new DataUtils(config.getProperties("ZWORKINGROOT"), config.getProperties("QVXROOT"));
+	public SchedulerUtils schedulerUtils = new SchedulerUtils();
 	
 	@RequestMapping(value = "/inputForm.do", method = RequestMethod.GET)
 	public void inPutForm(HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -39,17 +44,25 @@ public class SchedulerController {
 	 */
 	@RequestMapping(value = "/start/all.do", method = RequestMethod.GET)
 	public void startALL(HttpServletRequest request, HttpServletResponse response) throws Exception {
-		logger.info("/inputForm.do");
+		logger.info("/start/all.do");
 		
-		List<TargetList> list = dataUtils.getTargetLists();
-
-		for (TargetList targetList : list) {
-			dataUtils.start(targetList);
-			targetList.setStatus("run");
-			fileUpdate(targetList);
+		try {
+			Gson gson = new GsonBuilder().create();
+			List<schedulerVO> list = schedulerSvc.selectschedulerList();
+			
+			for(schedulerVO vo : list) {
+				TargetList targetList = gson.fromJson(vo.getOBJECT_JSON(), TargetList.class);
+				targetList.setStatus("run");
+				
+				schedulerUtils.start(targetList);
+				schedulerSvc.insertscheduler(vo.getOBJECT_ID(), "S", gson.toJson(targetList));
+			}
+			
+			response.getWriter().print(true);
+		} catch (IOException e) {
+			e.printStackTrace();
+			response.getWriter().print(false);
 		}
-
-		response.getWriter().print(true);
 	}
 
 	/*
@@ -60,12 +73,15 @@ public class SchedulerController {
 	public void startSelectedList(@RequestParam(value = "listUniqueID") List<String> uniqueIds, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		logger.info("/inputForm.do");
 		
+		Gson gson = new GsonBuilder().create();
 		for (String uniqueId : uniqueIds) {
-			TargetList targetList = dataUtils.selectTargetList(uniqueId);
+			schedulerVO vo = schedulerSvc.selectschedulerOne(uniqueId);
+			TargetList targetList = gson.fromJson(vo.getOBJECT_JSON(), TargetList.class);
 
-			dataUtils.start(targetList);
 			targetList.setStatus("run");
-			fileUpdate(targetList);
+			schedulerUtils.start(targetList);		
+
+			schedulerSvc.insertscheduler(uniqueId, "S", gson.toJson(targetList));
 		}
 
 		response.getWriter().print(true);
@@ -78,12 +94,15 @@ public class SchedulerController {
 	@RequestMapping(value = "/start/selectedOne.do", method = RequestMethod.GET)
 	public void startSelectedOne(@RequestParam(value = "uniqueId") String uniqueId, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		logger.info("/start/selectedOne.do");
-		TargetList targets = dataUtils.selectTargetList(uniqueId);
-
-		targets.setStatus("run");
-		dataUtils.start(targets);		
-		fileUpdate(targets);
 		
+		Gson gson = new GsonBuilder().create();
+		schedulerVO vo = schedulerSvc.selectschedulerOne(uniqueId);
+		TargetList targetList = gson.fromJson(vo.getOBJECT_JSON(), TargetList.class);
+
+		targetList.setStatus("run");
+		schedulerUtils.start(targetList);		
+
+		schedulerSvc.insertscheduler(uniqueId, "S", gson.toJson(targetList));
 		response.getWriter().print(true);
 	}
 
@@ -94,15 +113,23 @@ public class SchedulerController {
 	public void stopALL(HttpServletRequest request, HttpServletResponse response) throws Exception {
 		logger.info("/stop/all.do");
 		
-		List<TargetList> list = dataUtils.getTargetLists();
-
-		for (TargetList targetList : list) {
-			dataUtils.stop(targetList);
-			targetList.setStatus("stop");
-			fileUpdate(targetList);
+		try {
+			Gson gson = new GsonBuilder().create();
+			List<schedulerVO> list = schedulerSvc.selectschedulerList();
+			
+			for(schedulerVO vo : list) {
+				TargetList targetList = gson.fromJson(vo.getOBJECT_JSON(), TargetList.class);
+				targetList.setStatus("stop");
+				
+				schedulerUtils.stop(targetList);
+				schedulerSvc.insertscheduler(vo.getOBJECT_ID(), "S", gson.toJson(targetList));
+			}
+			
+			response.getWriter().print(true);
+		} catch (IOException e) {
+			e.printStackTrace();
+			response.getWriter().print(false);
 		}
-
-		response.getWriter().print(true);
 	}
 
 	/*
@@ -112,12 +139,17 @@ public class SchedulerController {
 	public void stopSelectedList(@RequestParam(value = "listUniqueID") List<String> uniqueIds, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		logger.info("/stop/selectedList.do");
 		
+		Gson gson = new GsonBuilder().create();
 		for (String uniqueId : uniqueIds) {
-			TargetList targetList = dataUtils.selectTargetList(uniqueId);
-			dataUtils.stop(targetList);
+			schedulerVO vo = schedulerSvc.selectschedulerOne(uniqueId);
+			TargetList targetList = gson.fromJson(vo.getOBJECT_JSON(), TargetList.class);
+
 			targetList.setStatus("stop");
-			fileUpdate(targetList);
+			schedulerUtils.stop(targetList);		
+
+			schedulerSvc.insertscheduler(uniqueId, "S", gson.toJson(targetList));
 		}
+
 		response.getWriter().print(true);
 	}
 
@@ -128,38 +160,15 @@ public class SchedulerController {
 	@RequestMapping(value = "/stop/selectedOne.do", method = RequestMethod.GET)
 	public void stopSelectedOne(@RequestParam(value = "uniqueId") String uniqueId, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		logger.info("/stop/selectedOne.do");
-		TargetList targetList = dataUtils.selectTargetList(uniqueId);
-		dataUtils.stop(targetList);
-		targetList.setStatus("stop");
-		fileUpdate(targetList);
+		
+		Gson gson = new GsonBuilder().create();
+		schedulerVO vo = schedulerSvc.selectschedulerOne(uniqueId);
+		TargetList targetList = gson.fromJson(vo.getOBJECT_JSON(), TargetList.class);
 
+		targetList.setStatus("stop");
+		schedulerUtils.stop(targetList);		
+
+		schedulerSvc.insertscheduler(uniqueId, "S", gson.toJson(targetList));
 		response.getWriter().print(true);
-	}
-	
-	private void fileUpdate(TargetList targetList){		
-		logger.info("function fileUpdate");
-		// 기존파일 삭제
-		dataUtils.deleteScheduleInfoFile(targetList.getUniqueId());
-		// 새로운파일 생성
-		dataUtils.createScheduleInfoFile(targetList);
-	}
-	
-	@RequestMapping(value = "/data/doExport.do", method = RequestMethod.GET)
-	public void doExport(HttpServletRequest request, HttpServletResponse response) throws IOException{
-		logger.info("/data/doExport.do");
-		List<TargetList> targetLists = dataUtils.getTargetLists();
-		 
-		Gson gson = new Gson();
-		
-		// 전체 데이터를 한개의 JSON 형태의 데이터로 저장.. 엑셀데이터 형태로
-		// 이렇게 한꺼번에 하면 양이 너무 많아질경우, java 'String'크기를 넘어갈 경우, 문제가 생길 수 있음.
-		// Import형태가 어떻게 돼야 하는지 모르므로 일단 이렇게 개발하고 멈춤
-		// Import형태때문에 데이터 구조가 복잡해저서 소스코드 양이 늘어 난다면 별도의 '서비스'클래스를 만들어서 로직 이관해야 함 
-		String result = gson.toJson(targetLists);
-		
-		//ZFileUtil.stringToFile(zProperty.getExportRootPath() + "exportResult", result);		
-		
-		// 데이터가 제대로 파일로 저장 되었을 때만 true가 반환되도록 수정 해야함
-		response.getWriter().print(result);
 	}
 }

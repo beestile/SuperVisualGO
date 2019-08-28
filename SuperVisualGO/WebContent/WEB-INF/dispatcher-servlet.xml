@@ -73,6 +73,4 @@
 			<bean class="com.zetta.common.utils.CommonInterceptor"></bean>
 		</mvc:interceptor>
 	</mvc:interceptors>
-	
-	<bean id="DownloadView" class="com.zetta.portal.ctl.file.DownloadView" /> 
 </beans>

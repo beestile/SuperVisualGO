@@ -7,7 +7,7 @@ import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
-import com.zetta.SpringApplicationContext;
+import com.zetta.common.utils.SpringApplicationContext;
 import com.zetta.publisher.model.ScheduleTarget;
 import com.zetta.publisher.model.TargetList;
 import com.zetta.scheduler.job.batch.CommandBatchJobStep;

@@ -3,9 +3,6 @@ package com.zetta.publisher.model;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * 
- * */
 public class TargetList {
 	
 	private List<ScheduleTarget> targets;

@@ -32,8 +32,8 @@ public class TriggerDaily implements ZTrigger {
 				.build();
 				
 		///////////////////////////////////////////////////////////
-		int hh = ZTimeUtil.getCalendar(targets.getCycleTime()).get(Calendar.HOUR_OF_DAY);
-		int mm = ZTimeUtil.getCalendar(targets.getCycleTime()).get(Calendar.MINUTE);
+		int hh = Integer.parseInt(targets.getCycleTime().split(":")[0]);
+		int mm = Integer.parseInt(targets.getCycleTime().split(":")[1]);
 		///////////////////////////////////////////////////////////
 		
 		Trigger trigger = newTrigger().withIdentity(targets.getTriggerId(), targets.getGroupId())
